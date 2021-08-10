@@ -5,7 +5,7 @@
 
 # 列表
 
- 1. FileTransfer(FileClient/FileServer)
+ 1. FileTransfer(FileClient/FileServer)  
  含3个版本  
  v1是单线程实现  
  v2是多线程实现，主线程只负责界面交互，子线程负责通信传输，客户端有传输大文件会崩溃的bug  

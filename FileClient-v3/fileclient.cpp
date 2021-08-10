@@ -11,6 +11,7 @@ FileClient::FileClient(QWidget *parent)
     this->setWindowIcon(QIcon(QString("://transfer.png")));
     socketLable = new QLabel(this);
     ui->statusbar->addWidget(socketLable);
+    ui->buttonDisconnect->setEnabled(false);
 
     //调试用
     ui->lineEditIP->setText(QString("127.0.0.1"));
@@ -37,6 +38,7 @@ FileClient::FileClient(QWidget *parent)
             return;
         }
         secTime = 0;
+        ui->buttonDisconnect->setEnabled(true);
         ui->lineEditTime->setText(QString::number(secTime));
         ui->progressBar->setValue(0);
         ui->textEdit->setText(result);
@@ -76,6 +78,7 @@ FileClient::FileClient(QWidget *parent)
         //退出子线程
         mthread->exit();
         mthread->wait();
+        ui->buttonDisconnect->setEnabled(false);
         ui->textEdit->append(QString("已断开连接"));
         socketLable->setText(QString());
     });

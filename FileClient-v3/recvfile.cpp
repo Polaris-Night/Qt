@@ -71,6 +71,14 @@ void RecvFile::receiveFile()
             return;
         }
 
+        speedSize = 0;
+        mtimer = new QTimer;
+        connect(mtimer, &QTimer::timeout, this, [=](){
+            emit getSpeedSize(speedSize);
+            speedSize = 0;
+        });
+        mtimer->start(1000);
+
         isFileMessage = false;
         //通知主线程初始化进度条
         emit initProgress(100);
@@ -79,6 +87,7 @@ void RecvFile::receiveFile()
         //处理文件内容
         qint64 len = file.write(receiveArray);
         readSize += len;
+        speedSize += len;
         //通知主线程更新进度条
         tempProgress = static_cast<double>(readSize)/static_cast<double>(fileSize)*100;
         if (tempProgress % 1 == 0 && tempProgress != progress) {
@@ -95,10 +104,12 @@ void RecvFile::receiveFile()
             //关闭文件
             file.close();
             isFileMessage = true;
+            //停止定时器
+            mtimer->stop();
+            mtimer->deleteLater();
             //通知主线程文件接收完成，返回存储路径
             QDir dir;
             emit finishRecv(QString("%1/output/%2").arg(dir.absolutePath()).arg(fileName));
         }
     }
-
 }

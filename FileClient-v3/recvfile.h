@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#include <QTimer>
 
 class RecvFile : public QObject
 {
@@ -21,6 +22,7 @@ signals:
     void initProgress(int maximum);//初始化进度条
     void updateProgress(int progress);//更新进度条
     void finishRecv(QString fileSavePath);//返回文件存储路径
+    void getSpeedSize(qint64 size);//返回单位时间内传输数据量
 
 public slots:
     //连接服务端
@@ -40,6 +42,8 @@ private:
     QFile file;//文件
     QString outputDirPath;//存储目录
 
+    QTimer *mtimer;//定时器
+    qint64 speedSize;
     int progress;//进度值
 };
 

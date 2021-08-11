@@ -28,7 +28,7 @@ signals:
 private:
     Ui::FileClient *ui;
 
-    QLabel *socketLable;//socket状态标签
+    QLabel *socketLabel;//socket状态标签
 
     QThread *mthread;//子线程
 

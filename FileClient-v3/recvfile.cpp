@@ -71,6 +71,7 @@ void RecvFile::receiveFile()
             return;
         }
 
+
         speedSize = 0;
         mtimer = new QTimer;
         connect(mtimer, &QTimer::timeout, this, [=](){

@@ -82,6 +82,7 @@ FileClient::FileClient(QWidget *parent)
         }
     });
 
+
     //主动断开连接
     connect(ui->buttonDisconnect, &QPushButton::clicked, this, [=](){
         emit disconnectServer();

@@ -54,20 +54,22 @@ void SendFile::startSendFile()
     qint64 len = 0;
     int tempProgress = 0;
     progress = 0;
+    char buffer[4*1024] = {0};
     do {
-        char buffer[4*1024] = {0};
         //读取文件内容
         len = file.read(buffer, sizeof(buffer));
         //发送
         len = tcpSocket->write(buffer, len);
+        tcpSocket->waitForBytesWritten();//等待数据发送出去，否则可能会造成内存溢出
         //记录已发送大小
         sendSize += len;
         //通知主线程更新进度条
         tempProgress = static_cast<double>(sendSize)/static_cast<double>(fileSize)*100;
-        if (tempProgress % 1 == 0 && tempProgress != progress) {
+        if (tempProgress != progress) {
             progress = tempProgress;
             emit updateProgress(progress);
         }
+
     } while (len > 0);
 
     //文件发送完毕

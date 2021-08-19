@@ -14,16 +14,24 @@ Serial::Serial(QWidget *parent)
     //状态栏
     statusLabel = new QLabel(this);
     ui->statusbar->addWidget(statusLabel);
+    //创建线程
+    mthread = new MThread;
     //标志初始化
     serialIsOpen = false;
     //信号和槽初始化
     connectInit();
-    //搜索串口
-    searchSerial();
+    //启动线程定时搜索串口
+    mthread->start();
+    //创建定时器
+    mtimer = new QTimer(this);
 }
 
 Serial::~Serial()
 {
+    //退出并销毁线程
+    mthread->exit();
+    mthread->wait();
+    mthread->deleteLater();
     delete ui;
 }
 
@@ -35,7 +43,19 @@ Serial::~Serial()
 void Serial::connectInit()
 {
     //定时搜索串口
-    connect(ui->searchCOM, &QAction::triggered, this, &Serial::searchSerial);
+    connect(mthread, &MThread::newSerial, this, [=](QString port){
+        //过滤重复串口
+        int i;
+        for (i = 0; i < ui->comboBoxCOM->count(); i++) {
+            if (ui->comboBoxCOM->itemText(i) == port)
+                break;
+        }
+        //添加新串口
+        if (i == ui->comboBoxCOM->count())
+            ui->comboBoxCOM->addItem(port);
+    });
+    //手动搜索串口
+    connect(ui->searchCOM, &QAction::triggered, mthread, &MThread::searchSerial);
     //开关串口
     connect(ui->buttonSerial, &QPushButton::clicked, this, [=](){
         if (!serialIsOpen) {
@@ -57,18 +77,18 @@ void Serial::connectInit()
     connect(ui->buttonClearSend, &QPushButton::clicked, ui->textSend, &QTextEdit::clear);
     //清空接收窗口
     connect(ui->buttonClearRecv, &QPushButton::clicked, ui->textRecv, &QTextBrowser::clear);
-}
-
-void Serial::searchSerial()
-{
-    foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
-        QSerialPort serial;
-        serial.setPort(info);
-        if(serial.open(QIODevice::ReadWrite)) {
-            ui->comboBoxCOM->addItem(QString("%1 %2").arg(serial.portName()).arg(info.description()));
-            serial.close();
+    //定时发送
+    connect(ui->checkBoxTiming, &QCheckBox::stateChanged, this, [=](){
+        if (serialIsOpen) {
+            if (ui->checkBoxTiming->checkState() == Qt::Checked) {
+                connect(mtimer, &QTimer::timeout, this, &Serial::sendData);
+                mtimer->start(ui->lineEditMs->text().toInt());
+            } else {
+                mtimer->stop();
+                disconnect(mtimer, &QTimer::timeout, this, &Serial::sendData);
+            }
         }
-    }
+    });
 }
 
 /**************************************
@@ -79,9 +99,9 @@ void Serial::searchSerial()
 void Serial::openSerial()
 {
     //设置端口
-    QString comInfo = ui->comboBoxCOM->currentText();
-    comInfo = comInfo.mid(0, comInfo.indexOf(" "));
-    serialPort.setPortName(comInfo);
+    QString comName = ui->comboBoxCOM->currentText();
+    comName = comName.mid(0, comName.indexOf(" "));
+    serialPort.setPortName(comName);
     //设置波特率
     serialPort.setBaudRate(ui->comboBoxBaudrate->currentText().toInt());
     //设置数据位
@@ -108,7 +128,7 @@ void Serial::openSerial()
         qDebug() << serialPort.errorString();
         return;
     }
-    statusLabel->setText(QString("%1已连接").arg(comInfo));
+    statusLabel->setText(QString("%1已连接").arg(comName));
     //修改标志
     serialIsOpen = true;
 }

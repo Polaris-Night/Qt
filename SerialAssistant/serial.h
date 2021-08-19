@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QTimer>
 
+#include "mthread.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Serial; }
@@ -23,7 +24,6 @@ public:
     Serial(QWidget *parent = nullptr);
     ~Serial();
     void connectInit();
-    void searchSerial();
 
 /*---------slots--------------*/
 public slots:
@@ -34,8 +34,10 @@ public slots:
 /*---------variable-----------*/
 private:
     Ui::Serial *ui;
-    QSerialPort serialPort;
-    QLabel *statusLabel;
-    bool serialIsOpen;
+    QSerialPort serialPort; //串口
+    QLabel *statusLabel; //状态栏标签
+    bool serialIsOpen; //串口标志
+    MThread *mthread; //线程
+    QTimer *mtimer;
 };
 #endif // SERIAL_H

@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("文件传输-v4.0");
     this->setWindowIcon(QIcon("://transfer.png"));
-    statusLabel = new QLabel(this);
+    statusLabel = new QLabel("未连接", this);
     ui->statusbar->addWidget(statusLabel);
     ui->btnDisconnect->setEnabled(false);
     ui->btnAdd->setEnabled(false);
@@ -120,7 +120,7 @@ void MainWindow::toConnect()
     //连接断开
     connect(work, &MWork::overConnect, this, [=](){
         work->deleteLater();
-        statusLabel->setText(QString());
+        statusLabel->setText("未连接");
         ui->btnConnect->setEnabled(true);
         ui->btnDisconnect->setEnabled(false);
         ui->btnAdd->setEnabled(false);

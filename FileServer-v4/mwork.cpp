@@ -48,29 +48,32 @@ void MWork::startConnect()
 void MWork::toGetSaveDir(QString dir)
 {
     saveDir = dir;
-    emit readSaveDir();
+    emit readySaveDir();
 }
 
 void MWork::recvFile()
 {
     QByteArray recvArray = tcpSocket->readAll();
+
     if (startRecv) {
         //解析数量信息
-        fileCount = QString(recvArray).section("##", 0, 0).toInt();
+        QJsonObject jsonObj = QJsonDocument::fromBinaryData(recvArray).object();
+        fileCount = jsonObj["fileCount"].toString().toInt();
         startRecv = false;
         recvCount = 0;
         //获取保存目录
         emit goToGetSaveDir();
         QEventLoop loop;
-        connect(this, &MWork::readSaveDir, &loop, &QEventLoop::quit);
+        connect(this, &MWork::readySaveDir, &loop, &QEventLoop::quit);
         loop.exec();
         //判断存储目录是否存在，不在则创建
         if (!QDir().exists(saveDir))
             QDir().mkdir(saveDir);
     } else if (isFileInfo) {
         //解析文件信息
-        fileName = QString(recvArray).section("##", 0, 0);
-        fileSize = QString(recvArray).section("##", 1, 1).toLong();
+        QJsonObject jsonObj = QJsonDocument::fromBinaryData(recvArray).object();
+        fileName = jsonObj["fileName"].toString();
+        fileSize = jsonObj["fileSize"].toString().toLongLong();
         //创建文件
         file.setFileName(QString("%1/%2").arg(saveDir).arg(fileName));
         if (!file.open(QIODevice::WriteOnly)) {

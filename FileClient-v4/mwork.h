@@ -8,6 +8,8 @@
 #include <QStringList>
 #include <QTimer>
 #include <QEventLoop>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 #include "mthread.h"
 

@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QDir>
 #include <QTimer>
+#include <QJsonParseError>
+#include <QJsonObject>
 
 #include "mthread.h"
 
@@ -52,7 +54,7 @@ signals:
     void socketMsg(QString ip, quint16 port);
     void overConnect();
     void goToGetSaveDir();
-    void readSaveDir();
+    void readySaveDir();
     void updateProgress(int progress);
     void updateSpeedSize(qint64 speedSize);
     void fileFinish(QString path);

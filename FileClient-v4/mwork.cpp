@@ -65,11 +65,14 @@ void MWork::toSendFile(QStringList fileList)
 {
     qint64 len = 0;
     fileCount = fileList.size();
-    sendCount = 0;
-    len = tcpSocket->write(QString("%1##").arg(fileCount).toUtf8());
+    //发送文件数量
+    QJsonObject jsonObj;
+    jsonObj.insert("fileCount", QJsonValue::fromVariant(QString("%1").arg(fileCount).toUtf8()));
+    len = tcpSocket->write(QJsonDocument(jsonObj).toBinaryData());
     tcpSocket->waitForBytesWritten();
     mtimer->start(20);
     loop.exec();
+    sendCount = 0;
     if (len <= 0) {
         qDebug() << tcpSocket->errorString();
         return;
@@ -85,8 +88,10 @@ void MWork::toSendFile(QStringList fileList)
         fileName = info.fileName();
         fileSize = info.size();
         //发送文件信息
-        QString fileInfo = QString("%1##%2").arg(fileName).arg(QString::number(fileSize));
-        len = tcpSocket->write(fileInfo.toUtf8());
+        QJsonObject jsonObj;
+        jsonObj.insert("fileName", fileName);
+        jsonObj.insert("fileSize", QJsonValue::fromVariant(QString("%1").arg(fileSize).toUtf8()));
+        len = tcpSocket->write(QJsonDocument(jsonObj).toBinaryData());
         tcpSocket->waitForBytesWritten();
         mtimer->start(20);
         loop.exec();

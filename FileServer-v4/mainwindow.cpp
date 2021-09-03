@@ -152,7 +152,7 @@ void MainWindow::readyConnect(qintptr socket)
 
     //更新速度
     connect(work, &MWork::updateSpeedSize, this, [=](qint64 speedSize){
-        double speed = speedSize/8.0;//B
+        double speed = speedSize/1.0;//B
         if (speed < 1024) {
             //小于1KB/s
             ui->speedLabel->setText(QString("%1B/s").arg(QString::number(speed, 'f', 2)));

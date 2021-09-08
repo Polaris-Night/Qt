@@ -22,6 +22,7 @@ struct BlockMsg
     int block;//分块编号
     qint64 blockSize;//分块大小
 };
+Q_DECLARE_METATYPE(BlockMsg)
 /*********************************全文件信息结构体*************************************/
 struct Msg
 {
@@ -30,6 +31,7 @@ struct Msg
     QString filePath;//文件路径
     QVector<qint64> blockSize;//分块文件大小
 };
+Q_DECLARE_METATYPE(Msg)
 /*********************************全文件信息类***************************************/
 class FileMsg
 {
@@ -62,11 +64,25 @@ public:
         }
     }
     ~FileMsg() {}
+    FileMsg& operator=(const FileMsg &msg) {
+        fileCount = msg.fileCount;
+        blockCount = msg.blockCount;
+        fileMsg = msg.fileMsg;
+        for (int i = 0; i < fileCount; i++) {
+            fileMsg[i].fileName = msg.fileMsg[i].fileName;
+            fileMsg[i].fileSize = msg.fileMsg[i].fileSize;
+            fileMsg[i].filePath = msg.fileMsg[i].filePath;
+            for (int j = 0; j < blockCount; j++)
+                fileMsg[i].blockSize[j] = msg.fileMsg[i].blockSize[j];
+        }
+        return *this;
+    }
 
     int fileCount;//文件数量
     QVector<Msg> fileMsg;//文件信息
     int blockCount;//分块数量
 };
+Q_DECLARE_METATYPE(FileMsg)
 
 /**********************************工作线程类***************************************/
 class MWork : public QObject
@@ -75,6 +91,8 @@ class MWork : public QObject
 public:
     explicit MWork(const QString &ip, const quint16 &port, QObject *parent = nullptr);
     ~MWork();
+
+    FileMsg getFileMsg(const QStringList &fileList, const int &block);
 
 public slots:
     void toConnect();//连接

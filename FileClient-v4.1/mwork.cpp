@@ -25,6 +25,31 @@ MWork::~MWork()
     thread->quit();
 }
 
+FileMsg MWork::getFileMsg(const QStringList &fileList, const int &block)
+{
+    //获取文件信息
+    QFileInfo info;
+    FileMsg msg(fileList.size(), block);
+    for (int i = 0; i < msg.fileCount; i++) {
+        info.setFile(fileList.at(i));
+        //计算文件总大小
+        totalSize += info.size();
+        //存储文件信息
+        msg.fileMsg[i].fileName = info.fileName();
+        msg.fileMsg[i].fileSize = info.size();
+        msg.fileMsg[i].filePath = fileList.at(i);
+        //计算分块大小
+        for (int j = 0, blockCount = msg.blockCount; j < blockCount; j++) {
+            if (j == blockCount-1)
+                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize - msg.fileMsg[i].blockSize[0]*(blockCount-1);
+            else
+                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize / (blockCount-1);
+        }
+    }
+
+    return msg;
+}
+
 void MWork::toConnect()
 {
     //创建socket
@@ -61,24 +86,7 @@ void MWork::toSendFile(const QStringList &fileList)
     emit updateProgress(progress);
 
     //获取文件信息
-    QFileInfo info;
-    FileMsg msg(fileList.size(), 4);
-    for (int i = 0; i < msg.fileCount; i++) {
-        info.setFile(fileList.at(i));
-        //计算文件总大小
-        totalSize += info.size();
-        //存储文件信息
-        msg.fileMsg[i].fileName = info.fileName();
-        msg.fileMsg[i].fileSize = info.size();
-        msg.fileMsg[i].filePath = fileList.at(i);
-        //计算分块大小
-        for (int j = 0, blockCount = msg.blockCount; j < blockCount; j++) {
-            if (j == blockCount-1)
-                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize - msg.fileMsg[i].blockSize[0]*(blockCount-1);
-            else
-                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize / (blockCount-1);
-        }
-    }
+    FileMsg msg = getFileMsg(fileList, 4);
 
     //根据文件数量创建线程发送文件
     for (int i = 0; i < msg.fileCount; i++) {
@@ -90,7 +98,7 @@ void MWork::toSendFile(const QStringList &fileList)
             //接收返回文件已发送大小并计算进度值
             connect(work, &SendFileThread::partSendSize, this, [=](qint64 sendSize){
                 totalSendSize += sendSize;
-                tempProgress = static_cast<double>(totalSendSize)/static_cast<double>(totalSize)*100;
+                tempProgress = static_cast<double>(totalSendSize) / static_cast<double>(totalSize) * 100;
                 if (tempProgress != progress) {
                     progress = tempProgress;
                     emit updateProgress(progress);
@@ -145,10 +153,7 @@ void SendFileThread::run()
     //计算偏移量
     qint64 offset;
     //若为最后一块，则偏移量=总大小-最后一块大小
-    if (msg.block == 3)
-        offset = msg.fileSize - msg.blockSize;
-    else
-        offset = msg.blockSize * msg.block;
+    offset = (msg.block == 3) ? (msg.fileSize - msg.blockSize) : (msg.blockSize * msg.block);
 
     //发送文件信息，格式:文件名+文件大小+分块编号+分块大小
     QJsonObject obj;
@@ -175,23 +180,20 @@ void SendFileThread::run()
     //读取文件
     qint64 len = 0;
     qint64 sendSize = 0;
-    qint64 tempPartSize = msg.blockSize;
+    qint64 blockSize = msg.blockSize;
     char buffer[4*1024];
     unsigned int bufferSize = sizeof(buffer);
     do {
         //读取
         memset(buffer, 0, bufferSize);
-        if (tempPartSize < bufferSize)
-            len = file.read(buffer, tempPartSize);
-        else
-            len = file.read(buffer, bufferSize);
+        len = file.read(buffer, blockSize < bufferSize ? blockSize : bufferSize);
         //发送
         len = socket->write(buffer, len);
         socket->waitForBytesWritten();
         sendSize += len;
-        tempPartSize -= len;
+        blockSize -= len;
         emit partSendSize(len);
-    } while (len > 0 && tempPartSize > 0);
+    } while (len > 0 && blockSize > 0);
 //    if (sendSize == partSize)
 //        qDebug() << QString("%1 %2 finished").arg(fileName).arg(part);
     //关闭文件

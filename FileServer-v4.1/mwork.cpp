@@ -32,7 +32,55 @@ MWork::MWork(const qintptr &socket, QObject *parent) : QObject(parent)
 
 MWork::~MWork()
 {
+    tcpSocket->deleteLater();
+    tcpSocket->close();
     thread->quit();
+}
+
+FileMsg MWork::parseFileMsg(QByteArray &msgByteArray)
+{
+    //校验JSON元素是否出错
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(msgByteArray, &err);
+    if (doc.isNull() || err.error != QJsonParseError::NoError) {
+        qDebug() << err.errorString();
+        return FileMsg();
+    }
+    //解析JSON数据，获取文件信息
+    if (doc.isObject()) {
+        QJsonObject obj = doc.object();
+        FileMsg msg;
+        msg.fileName = obj["fileName"].toString();
+        msg.fileSize = obj["fileSize"].toVariant().toLongLong();
+        msg.block = obj["block"].toInt();
+        msg.blockSize = obj["blockSize"].toVariant().toLongLong();
+        return msg;
+    }
+    return FileMsg();
+}
+
+QString MWork::getSaveDir(QString &dir)
+{
+    //获取保存目录
+    rwLock.lockForRead();//加读锁
+    QString sDir = dir;
+    rwLock.unlock();//解读锁
+    //判断存储目录是否存在，不在则创建
+    if (!QDir().exists(sDir))
+        QDir().mkdir(sDir);
+    return sDir;
+}
+
+bool MWork::createFile(const QString &fileName, const int &block, const qint64 &fileSize)
+{
+    file.setFileName(QString("%1/%2.00%3").arg(dir).arg(fileName).arg(block+1));
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << file.errorString();
+        return false;
+    }
+    //预设文件大小，防止存储空间不足
+    file.resize(fileSize);
+    return true;
 }
 
 void MWork::startConnect()
@@ -47,8 +95,6 @@ void MWork::startConnect()
     //连接断开
     connect(tcpSocket, &QTcpSocket::disconnected, this, [=](){
         emit overConnect();
-        tcpSocket->deleteLater();
-        tcpSocket->close();
     });
 
     //有数据
@@ -60,44 +106,23 @@ void MWork::recvFile()
     QByteArray recvArray = tcpSocket->readAll();
 
     if (startRecv) {
-        //校验JSON元素是否出错
-        QJsonParseError err;
-        QJsonDocument doc = QJsonDocument::fromJson(recvArray, &err);
-        if (doc.isNull() || err.error != QJsonParseError::NoError) {
-            qDebug() << err.errorString();
+        //获取文件信息
+        msg = parseFileMsg(recvArray);
+        if (msg.isEmpty())
             return;
-        }
-        //解析JSON数据，获取文件信息
-        if (doc.isObject()) {
-            QJsonObject obj = doc.object();
-            msg.fileName = obj["fileName"].toString();
-            msg.fileSize = obj["fileSize"].toVariant().toLongLong();
-            msg.block = obj["block"].toInt();
-            msg.blockSize = obj["blockSize"].toVariant().toLongLong();
-            //每个文件由第一分块记录总大小并发送更新进度条信号
-            if (msg.block == 0) {
-                mutex.lock();//加锁
-                totalSize += msg.fileSize;
-                emit updateTotalSize(totalSize);
-                mutex.unlock();//解锁
-                emit updateProgress(progress);
-            }
+        //每个文件由第一分块记录总大小并发送更新进度条信号
+        if (msg.block == 0) {
+            mutex.lock();//加锁
+            totalSize += msg.fileSize;
+            emit updateTotalSize(totalSize);
+            mutex.unlock();//解锁
+            emit updateProgress(progress);
         }
         //获取保存目录
-        rwLock.lockForRead();//加读锁
-        dir = saveDir;
-        rwLock.unlock();//解读锁
-        //判断存储目录是否存在，不在则创建
-        if (!QDir().exists(dir))
-            QDir().mkdir(dir);
+        dir = getSaveDir(saveDir);
         //创建文件
-        file.setFileName(QString("%1/%2.00%3").arg(dir).arg(msg.fileName).arg(msg.block+1));
-        if (!file.open(QIODevice::WriteOnly)) {
-            qDebug() << file.errorString();
+        if (!createFile(msg.fileName, msg.block, msg.blockSize))
             return;
-        }
-        //预设文件大小，防止存储空间不足
-        file.resize(msg.blockSize);
         //若最后一块为大小为0，则直接返回
         if (msg.block == 3 && msg.blockSize == 0) {
             file.close();
@@ -116,7 +141,7 @@ void MWork::recvFile()
         //计算进度值并更新进度条
         rwLock.lockForWrite();//加写锁
         totalRecvSize += len;
-        tempProgress = static_cast<double>(totalRecvSize)/static_cast<double>(totalSize)*100;
+        tempProgress = static_cast<double>(totalRecvSize) / static_cast<double>(totalSize) * 100;
         if (tempProgress != progress) {
             progress = tempProgress;
             emit updateProgress(progress);

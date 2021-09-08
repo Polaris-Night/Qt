@@ -30,6 +30,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    QString speedToString(double &speed);//速度值转带单位的字符串
+
 public slots:
     void readyConnect(qintptr socket);//连接客户端
 
@@ -37,9 +39,7 @@ private:
     Ui::MainWindow *ui;
 
     QTimer mtimer;//定时器
-
     MServer *server;//服务端监听socket
-
     QLabel *statusLabel;//状态栏标签
 
 signals:

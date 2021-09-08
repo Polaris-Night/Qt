@@ -9,6 +9,7 @@
 QMutex mutex;//全局线程同步互斥锁
 qint64 speedSize = 0;//单位时间接收总大小
 QString saveDir;//全局保存目录
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -64,8 +65,8 @@ MainWindow::MainWindow(QWidget *parent)
         if (!modPath.isEmpty()) {
             MWork::rwLock.lockForWrite();//加写锁
             saveDir = modPath;
-            ui->lineEditPath->setText(saveDir);
             MWork::rwLock.unlock();//解写锁
+            ui->lineEditPath->setText(modPath);
         }
     });
 
@@ -78,18 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
         double speed = speedSize/1.0;//B
         speedSize = 0;
         mutex.unlock();//解锁
-        if (speed < 1024) {
-            //小于1KB/s
-            ui->speedLabel->setText(QString("%1B/s").arg(QString::number(speed, 'f', 2)));
-        } else if (speed < 1024*1024) {
-            //小于1MB/s
-            speed /= 1024;
-            ui->speedLabel->setText(QString("%1KB/s").arg(QString::number(speed, 'f', 2)));
-        } else {
-            //大于1MB/s
-            speed /= 1024*1024;
-            ui->speedLabel->setText(QString("%1MB/s").arg(QString::number(speed, 'f', 2)));
-        }
+        ui->speedLabel->setText(speedToString(speed));
     });
 
     //QLiswWidget右键菜单
@@ -143,6 +133,20 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+inline QString MainWindow::speedToString(double &speed)
+{
+    if (speed < 1024) {
+        //小于1KB/s
+    } else if (speed < 1024*1024) {
+        //小于1MB/s
+        speed /= 1024;
+    } else {
+        //大于1MB/s
+        speed /= 1024*1024;
+    }
+    return QString("%1MB/s").arg(QString::number(speed, 'f', 2));
 }
 
 void MainWindow::readyConnect(qintptr socket)
@@ -213,6 +217,7 @@ qint64 MergeThread::totalFinishedSize = 0;//已完成总大小
 int MergeThread::totalProgress = 0;//总进度值
 int MergeThread::totalTempProgress = 0;//临时总进度值
 QReadWriteLock MergeThread::rwLock;//读写锁
+
 MergeThread::MergeThread(const QString saveDir, const FileMsg msg, QObject *parent) : QThread(parent)
 {
     this->saveDir = saveDir;
@@ -239,10 +244,7 @@ void MergeThread::run()
     char buffer[4*1024];
     qint64 offset;
     //计算偏移量
-    if (msg.block == 3)
-        offset = msg.fileSize - msg.blockSize;
-    else
-        offset = msg.blockSize * msg.block;
+    offset = (msg.block == 3) ? (msg.fileSize - msg.blockSize) : (msg.blockSize * msg.block);
 
     //读分块文件并写入源文件
     rwLock.lockForWrite();//加写锁
@@ -257,7 +259,7 @@ void MergeThread::run()
         len = sourceFile.write(buffer, len);
         //计算更新总进度
         totalFinishedSize += len;
-        totalTempProgress = static_cast<double>(totalFinishedSize)/static_cast<double>(totalSize)*100;
+        totalTempProgress = static_cast<double>(totalFinishedSize) / static_cast<double>(totalSize) * 100;
         if (totalTempProgress != totalProgress) {
             totalProgress = totalTempProgress;
             emit updateTotalProgress(totalProgress);

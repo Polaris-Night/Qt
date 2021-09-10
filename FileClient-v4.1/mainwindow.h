@@ -32,11 +32,8 @@ private:
     Ui::MainWindow *ui;
 
     QStringList fileList;//文件列表
-
     QTimer mtimer;//定时器
-
     QLabel *statusLabel;//状态栏标签
-
     bool isConnect;//连接标志
 
 signals:

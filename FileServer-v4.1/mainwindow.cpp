@@ -3,10 +3,10 @@
 #include <QDebug>
 #include <QList>
 #include <QMutex>
-
+#include <QProcess>
 
 /************************************主线程***************************************/
-QMutex mutex;//全局线程同步互斥锁
+QMutex mutex;//全局互斥锁
 qint64 speedSize = 0;//单位时间接收总大小
 QString saveDir;//全局保存目录
 
@@ -132,10 +132,17 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if (!MergeThread::lockMap.isEmpty()) {
+        QList<QReadWriteLock*> temp = MergeThread::lockMap.values();
+        for (int i = 0, size = temp.size(); i < size; i++) {
+            qDebug() << temp[i];
+            delete temp[i];
+        }
+    }
     delete ui;
 }
 
-inline QString MainWindow::speedToString(double &speed)
+QString MainWindow::speedToString(double &speed)
 {
     if (speed < 1024) {
         //小于1KB/s
@@ -176,7 +183,7 @@ void MainWindow::readyConnect(qintptr socket)
     //更新全部文件总大小
     connect(work, &MWork::updateTotalSize, this, [=](qint64 size){
         MergeThread::rwLock.lockForWrite();
-        MergeThread::totalSize = size;
+        MergeThread::totalSize += size;
         MergeThread::rwLock.unlock();
     });
 
@@ -187,6 +194,7 @@ void MainWindow::readyConnect(qintptr socket)
             mutex.lock();//加锁
             speedSize = 0;
             mutex.unlock();//解锁
+            ui->progressBarTotal->setValue(0);
             mtimer.start(1000);
         } else if (progress == 100) {
             ui->speedLabel->setText("0B/s");
@@ -195,8 +203,13 @@ void MainWindow::readyConnect(qintptr socket)
     });
 
     //单个文件接收完成
-    connect(work, &MWork::fileFinish, this, [=](FileMsg msg){
+    connect(work, &MWork::fileFinished, this, [=](FileMsg msg){
         ui->textBrowser->append(QString("[完成]%1.00%2").arg(msg.fileName).arg(msg.block+1));
+        //每个文件创建一个读写锁
+        if (!MergeThread::lockMap.contains(msg.fileName)) {
+            QReadWriteLock *lock = new QReadWriteLock;
+            MergeThread::lockMap.insert(msg.fileName, lock);
+        }
         //创建线程合并文件
         MergeThread *thread = new MergeThread(saveDir, msg);
         //更新总进度条
@@ -217,8 +230,9 @@ qint64 MergeThread::totalFinishedSize = 0;//已完成总大小
 int MergeThread::totalProgress = 0;//总进度值
 int MergeThread::totalTempProgress = 0;//临时总进度值
 QReadWriteLock MergeThread::rwLock;//读写锁
+QMap<QString, QReadWriteLock*> MergeThread::lockMap;//读写锁列表
 
-MergeThread::MergeThread(const QString saveDir, const FileMsg msg, QObject *parent) : QThread(parent)
+MergeThread::MergeThread(const QString saveDir, const FileMsg &msg, QObject *parent) : QThread(parent)
 {
     this->saveDir = saveDir;
     this->msg = msg;
@@ -227,6 +241,22 @@ MergeThread::MergeThread(const QString saveDir, const FileMsg msg, QObject *pare
 MergeThread::~MergeThread()
 {
 
+}
+
+void MergeThread::calculateProgress(const qint64 &len)
+{
+    rwLock.lockForWrite();//加写锁
+    totalFinishedSize += len;
+    totalTempProgress = static_cast<double>(totalFinishedSize) / static_cast<double>(totalSize) * 100;
+    if (totalTempProgress != totalProgress) {
+        totalProgress = totalTempProgress;
+        emit updateTotalProgress(totalProgress);
+        if (totalProgress == 100) {
+            totalProgress = totalTempProgress = 0;
+            totalSize = totalFinishedSize = 0;
+        }
+    }
+    rwLock.unlock();//解写锁
 }
 
 void MergeThread::run()
@@ -240,37 +270,39 @@ void MergeThread::run()
         return;
     }
 
-    qint64 len = 0;
     char buffer[4*1024];
+    size_t bufferSize = sizeof(buffer);
+    qint64 len = 0;
     qint64 offset;
     //计算偏移量
     offset = (msg.block == 3) ? (msg.fileSize - msg.blockSize) : (msg.blockSize * msg.block);
 
     //读分块文件并写入源文件
-    rwLock.lockForWrite();//加写锁
+    lockMap[msg.fileName]->lockForWrite();//加写锁
     if (!sourceFile.open(QIODevice::Append | QIODevice::WriteOnly)) {
-        qDebug() << sourceFile.errorString();
-        return;
+        qDebug() << msg.fileName << QString("block:%1").arg(msg.block) << sourceFile.errorString();
+        //打开失败，使用QProcess处理后再次打开
+        QProcess proc;
+        proc.start(sourceFile.fileName(), QStringList(sourceFile.fileName()));
+        proc.close();
+        if (!sourceFile.open(QIODevice::Append | QIODevice::WriteOnly)) {
+            lockMap[msg.fileName]->unlock();//解写锁
+            qDebug() << msg.fileName << sourceFile.errorString();
+            blockFile.close();
+            return;
+        }
     }
     sourceFile.seek(offset);
     do {
-        //memset(buffer, 0, sizeof(buffer));
-        len = blockFile.read(buffer, sizeof(buffer));
+        memset(buffer, 0, bufferSize);
+        len = blockFile.read(buffer, bufferSize);
         len = sourceFile.write(buffer, len);
         //计算更新总进度
-        totalFinishedSize += len;
-        totalTempProgress = static_cast<double>(totalFinishedSize) / static_cast<double>(totalSize) * 100;
-        if (totalTempProgress != totalProgress) {
-            totalProgress = totalTempProgress;
-            emit updateTotalProgress(totalProgress);
-            if (totalProgress == 100) {
-                totalProgress = totalTempProgress = 0;
-                totalSize = totalFinishedSize = 0;
-            }
-        }
+        calculateProgress(len);
     } while (len > 0);
     sourceFile.close();
-    rwLock.unlock();//解写锁
+    lockMap[msg.fileName]->unlock();//解写锁
+    qDebug() << msg.fileName << QString("block:%1").arg(msg.block) << lockMap[msg.fileName];
 
     //关闭并移除分块文件
     blockFile.close();

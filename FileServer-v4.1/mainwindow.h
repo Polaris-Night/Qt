@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QUrl>
 #include <QDir>
+#include <QMap>
 #include <QFile>
 #include <QMenu>
 #include <QTimer>
@@ -54,20 +55,24 @@ class MergeThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit MergeThread(const QString saveDir, const FileMsg msg, QObject *parent = nullptr);
+    explicit MergeThread(const QString saveDir, const FileMsg &msg, QObject *parent = nullptr);
     ~MergeThread();
+
+    void calculateProgress(const qint64 &len);//计算更新总进度条
 
     static qint64 totalSize;//全部文件总大小
     static qint64 totalFinishedSize;//已完成总大小
     static int totalProgress;//总进度值
     static int totalTempProgress;//临时总进度值
     static QReadWriteLock rwLock;//读写锁
+    //<文件名, 锁>
+    static QMap<QString, QReadWriteLock*> lockMap;//读写锁列表，同一文件的分块用同一个锁
 
 protected:
     void run() override;
 
 private:
-    QString saveDir;//保存路面
+    QString saveDir;//保存路径
     FileMsg msg;//文件信息
 
 signals:

@@ -43,13 +43,10 @@ public:
     FileMsg(const int &FileCount, const int &BlockCount) {
         fileCount = FileCount;
         blockCount = BlockCount;
-        for (int i = 0; i < fileCount; i++) {
-            fileMsg.push_back(Msg());
-            for (int j = 0; j < blockCount; j++) {
-                qint64 size = 0;
-                fileMsg[i].blockSize.push_back(size);
-            }
-        }
+        fileMsg.insert(0, fileCount, Msg());
+        qint64 size = 0;
+        for (int i = 0; i < fileCount; i++)
+            fileMsg[i].blockSize.insert(0, blockCount, size);
     }
     FileMsg(const FileMsg &msg) {
         fileCount = msg.fileCount;
@@ -59,8 +56,7 @@ public:
             fileMsg[i].fileName = msg.fileMsg[i].fileName;
             fileMsg[i].fileSize = msg.fileMsg[i].fileSize;
             fileMsg[i].filePath = msg.fileMsg[i].filePath;
-            for (int j = 0; j < blockCount; j++)
-                fileMsg[i].blockSize[j] = msg.fileMsg[i].blockSize[j];
+            fileMsg[i].blockSize = msg.fileMsg[i].blockSize;
         }
     }
     ~FileMsg() {}
@@ -72,8 +68,7 @@ public:
             fileMsg[i].fileName = msg.fileMsg[i].fileName;
             fileMsg[i].fileSize = msg.fileMsg[i].fileSize;
             fileMsg[i].filePath = msg.fileMsg[i].filePath;
-            for (int j = 0; j < blockCount; j++)
-                fileMsg[i].blockSize[j] = msg.fileMsg[i].blockSize[j];
+            fileMsg[i].blockSize = msg.fileMsg[i].blockSize;
         }
         return *this;
     }
@@ -92,7 +87,7 @@ public:
     explicit MWork(const QString &ip, const quint16 &port, QObject *parent = nullptr);
     ~MWork();
 
-    FileMsg getFileMsg(const QStringList &fileList, const int &block);
+    FileMsg getFileMsg(const QStringList &fileList, const int &blockCount);
 
 public slots:
     void toConnect();//连接

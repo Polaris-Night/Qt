@@ -25,11 +25,11 @@ MWork::~MWork()
     thread->quit();
 }
 
-FileMsg MWork::getFileMsg(const QStringList &fileList, const int &block)
+FileMsg MWork::getFileMsg(const QStringList &fileList, const int &blockCount)
 {
     //获取文件信息
     QFileInfo info;
-    FileMsg msg(fileList.size(), block);
+    FileMsg msg(fileList.size(), blockCount);
     for (int i = 0; i < msg.fileCount; i++) {
         info.setFile(fileList.at(i));
         //计算文件总大小
@@ -41,9 +41,9 @@ FileMsg MWork::getFileMsg(const QStringList &fileList, const int &block)
         //计算分块大小
         for (int j = 0, blockCount = msg.blockCount; j < blockCount; j++) {
             if (j == blockCount-1)
-                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize - msg.fileMsg[i].blockSize[0]*(blockCount-1);
+                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize - msg.fileMsg[i].blockSize[0]*j;
             else
-                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize / (blockCount-1);
+                msg.fileMsg[i].blockSize[j] = msg.fileMsg[i].fileSize / blockCount;
         }
     }
 
@@ -179,10 +179,9 @@ void SendFileThread::run()
     file.seek(offset);
     //读取文件
     qint64 len = 0;
-    qint64 sendSize = 0;
     qint64 blockSize = msg.blockSize;
     char buffer[4*1024];
-    unsigned int bufferSize = sizeof(buffer);
+    size_t bufferSize = sizeof(buffer);
     do {
         //读取
         memset(buffer, 0, bufferSize);
@@ -190,12 +189,9 @@ void SendFileThread::run()
         //发送
         len = socket->write(buffer, len);
         socket->waitForBytesWritten();
-        sendSize += len;
         blockSize -= len;
         emit partSendSize(len);
     } while (len > 0 && blockSize > 0);
-//    if (sendSize == partSize)
-//        qDebug() << QString("%1 %2 finished").arg(fileName).arg(part);
     //关闭文件
     file.close();
 

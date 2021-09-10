@@ -60,8 +60,9 @@ public:
     ~MWork();
 
     FileMsg parseFileMsg(QByteArray &msgByteArray);//解析文件信息
-    QString getSaveDir(QString &dir);//获取保存目录
+    void setSaveDir(QString &sDir);//设置保存目录
     bool createFile(const QString &fileName, const int &block, const qint64 &fileSize);//创建文件
+    void calculateProgress(qint64 &len);//计算更新总进度条
 
     static QReadWriteLock rwLock;//读写锁
     static qint64 totalSize;//全部文件总大小
@@ -77,18 +78,12 @@ public slots:
 
 private:
     QTcpSocket *tcpSocket;//socket
-
     qintptr socket;//socket描述符
-
     MThread *thread;//线程
-
     QFile file;//文件
     QString dir;//保存目录
-
     FileMsg msg;//文件信息
-
     qint64 recvSize;//接收大小
-
     bool startRecv;//开始接收标志
 
 signals:
@@ -96,9 +91,8 @@ signals:
     void socketMsg(QString ip, quint16 port);//发送socket信息信号
     void updateTotalSize(qint64 size);//更新全部文件总大小信号
     void overConnect();//结束连接信号
-    void readySaveDir();//已获取保存目录信号
     void updateProgress(int progress);//更新进度条信号
-    void fileFinish(FileMsg msg);//文件接收完成信号
+    void fileFinished(FileMsg msg);//文件接收完成信号
 };
 
 #endif // MWORK_H

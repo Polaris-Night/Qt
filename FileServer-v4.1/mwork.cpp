@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QMutex>
 
-extern QMutex mutex;//全局线程同步互斥锁
+extern QMutex mutex;//全局互斥锁
 extern qint64 speedSize;//单位时间接收总大小
 extern QString saveDir;//全局保存目录
 
@@ -59,16 +59,15 @@ FileMsg MWork::parseFileMsg(QByteArray &msgByteArray)
     return FileMsg();
 }
 
-QString MWork::getSaveDir(QString &dir)
+void MWork::setSaveDir(QString &sDir)
 {
     //获取保存目录
     rwLock.lockForRead();//加读锁
-    QString sDir = dir;
+    dir = sDir;
     rwLock.unlock();//解读锁
     //判断存储目录是否存在，不在则创建
-    if (!QDir().exists(sDir))
-        QDir().mkdir(sDir);
-    return sDir;
+    if (!QDir().exists(dir))
+        QDir().mkdir(dir);
 }
 
 bool MWork::createFile(const QString &fileName, const int &block, const qint64 &fileSize)
@@ -81,6 +80,22 @@ bool MWork::createFile(const QString &fileName, const int &block, const qint64 &
     //预设文件大小，防止存储空间不足
     file.resize(fileSize);
     return true;
+}
+
+void MWork::calculateProgress(qint64 &len)
+{
+    rwLock.lockForWrite();//加写锁
+    totalRecvSize += len;
+    tempProgress = static_cast<double>(totalRecvSize) / static_cast<double>(totalSize) * 100;
+    if (tempProgress != progress) {
+        progress = tempProgress;
+        emit updateProgress(progress);
+        if (progress == 100) {
+            totalSize = totalRecvSize = 0;
+            progress = tempProgress = 0;
+        }
+    }
+    rwLock.unlock();//解写锁
 }
 
 void MWork::startConnect()
@@ -112,21 +127,21 @@ void MWork::recvFile()
             return;
         //每个文件由第一分块记录总大小并发送更新进度条信号
         if (msg.block == 0) {
-            mutex.lock();//加锁
+            rwLock.lockForWrite();
             totalSize += msg.fileSize;
-            emit updateTotalSize(totalSize);
-            mutex.unlock();//解锁
+            rwLock.unlock();
+            emit updateTotalSize(msg.fileSize);
             emit updateProgress(progress);
         }
-        //获取保存目录
-        dir = getSaveDir(saveDir);
+        //设置保存目录
+        setSaveDir(saveDir);
         //创建文件
         if (!createFile(msg.fileName, msg.block, msg.blockSize))
             return;
         //若最后一块为大小为0，则直接返回
         if (msg.block == 3 && msg.blockSize == 0) {
             file.close();
-            emit fileFinish(msg);
+            emit fileFinished(msg);
             return;
         }
         startRecv = false;
@@ -139,24 +154,13 @@ void MWork::recvFile()
         speedSize += len;
         mutex.unlock();//解锁
         //计算进度值并更新进度条
-        rwLock.lockForWrite();//加写锁
-        totalRecvSize += len;
-        tempProgress = static_cast<double>(totalRecvSize) / static_cast<double>(totalSize) * 100;
-        if (tempProgress != progress) {
-            progress = tempProgress;
-            emit updateProgress(progress);
-            if (progress == 100) {
-                totalSize = totalRecvSize = 0;
-                progress = tempProgress = 0;
-            }
-        }
-        rwLock.unlock();//解写锁
+        calculateProgress(len);
         //单个文件接收完成
         if (recvSize == msg.blockSize) {
             file.close();
             startRecv = true;
             //返回保存文件名
-            emit fileFinish(msg);
+            emit fileFinished(msg);
         }
     }
 }

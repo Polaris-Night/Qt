@@ -87,7 +87,8 @@ MainWindow::MainWindow(QWidget *parent)
         QStringList list = name.split(".");
         name.clear();
         for (int i = 0; i < list.size()-1; i++) {
-            name.append(".");
+            if (i != 0)
+                name.append(".");
             name.append(list.at(i));
         }
         //创建线程合并文件

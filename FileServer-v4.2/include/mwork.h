@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QFile>
 #include <QTcpSocket>
-#include <QReadWriteLock>
+#include <QMutex>
 
 #include "mthread.h"
 
@@ -56,11 +56,11 @@ public:
     ~MWork();
 
     FileMsg parseFileMsg(QByteArray &msgByteArray);//解析文件信息
-    void setSaveDir(QString &sDir);//设置保存目录
+    void setSaveDir(const QString &sDir);//设置保存目录
     bool createFile(const QString &fileName, const int &block, const qint64 &fileSize);//创建文件
     void calculateProgress(qint64 &len);//计算更新总进度条
 
-    static QReadWriteLock rwLock;//读写锁
+    static QMutex workMutex;//线程互斥锁
     static qint64 totalSize;//全部文件总大小
     static qint64 totalRecvSize;//总接收大小
     static int tempProgress;//临时进度值

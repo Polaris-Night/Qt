@@ -178,7 +178,14 @@
     <addaction name="actionUbuntu"/>
     <addaction name="actionLight"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>帮助</string>
+    </property>
+    <addaction name="actionhelp"/>
+   </widget>
    <addaction name="theme"/>
+   <addaction name="menu"/>
   </widget>
   <action name="actionDark">
    <property name="text">
@@ -198,6 +205,11 @@
   <action name="actionLight">
    <property name="text">
     <string>Light</string>
+   </property>
+  </action>
+  <action name="actionhelp">
+   <property name="text">
+    <string>使用说明</string>
    </property>
   </action>
  </widget>

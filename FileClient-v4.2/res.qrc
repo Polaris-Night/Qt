@@ -113,5 +113,6 @@
         <file>qss/icon/close.svg</file>
         <file>qss/icon/max.svg</file>
         <file>qss/icon/min.svg</file>
+        <file>transfer.png</file>
     </qresource>
 </RCC>

@@ -4,20 +4,27 @@
 #include <QMenu>
 #include <QAction>
 #include <QFileDialog>
-#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    this->setWindowTitle("文件传输-v4.2");
-    this->setWindowIcon(QIcon("://transfer.png"));
+
+    MLogManager::spaceLine();
+    qDebug() << "program start";
+
     statusLabel = new QLabel("未连接", this);
     ui->statusbar->addWidget(statusLabel);
     ui->btnDisconnect->setEnabled(false);
     ui->btnAdd->setEnabled(false);
     ui->btnSend->setEnabled(false);
+
+    //按钮添加图标
+    ui->btnConnect->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    ui->btnDisconnect->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    ui->btnAdd->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    ui->btnSend->setIcon(style()->standardIcon(QStyle::SP_CommandLink));
 
     //加载样式表
     msetStyleSheet(":/qss/dark.css");
@@ -35,16 +42,18 @@ MainWindow::MainWindow(QWidget *parent)
         msetStyleSheet(":/qss/flatwhite.css");
     });
 
-    MLogManager::spaceLine();
-    qDebug() << "program start";
+    //加载使用说明
+    helpBox = new QMessageBox(this);
+    helpBox->resize(500, 400);
+    helpBox->setIconPixmap(QPixmap(":/transfer.png").scaled(40, 40));
+    helpBox->setText(loadHelpText());
+    connect(ui->actionhelp, &QAction::triggered, helpBox, &QMessageBox::exec);
 
     //点击连接
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::toConnect);
 
     //断开连接
-    connect(ui->btnDisconnect, &QPushButton::clicked, this, [=](){
-        emit goToDisconnect();
-    });
+    connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::goToDisconnect);
 
     //添加文件
     connect(ui->btnAdd, &QPushButton::clicked, this, [=](){
@@ -163,12 +172,22 @@ void MainWindow::toConnect()
     connect(this, &MainWindow::goToSendFile, work, &MWork::toSendFile);
 
     //更新进度
-    connect(work, &MWork::updateProgress, this, [=](int progress){
-        ui->progressBar->setValue(progress);
-    });
+    connect(work, &MWork::updateProgress, ui->progressBar, &QProgressBar::setValue);
 
     //全部文件发送完成
     connect(work, &MWork::sendFinish, this, [=](){
         QMessageBox::information(this, "信息", "全部文件发送完成");
     });
+}
+
+QString MainWindow::loadHelpText()
+{
+    QFile helpFile("help.txt");
+    if (!helpFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning("open file %s error:%s", qUtf8Printable(QString("help.txt")), qUtf8Printable(helpFile.errorString()));
+        return QString();
+    }
+    QString helpText(helpFile.readAll());
+    helpFile.close();
+    return helpText;
 }

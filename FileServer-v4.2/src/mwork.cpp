@@ -10,7 +10,7 @@ extern QMutex mutex;//全局互斥锁
 extern qint64 speedSize;//单位时间接收总大小
 extern QString saveDir;//全局保存目录
 
-QReadWriteLock MWork::rwLock;//读写锁
+QMutex MWork::workMutex;//线程互斥锁
 qint64 MWork::totalSize = 0;//全部文件总大小
 qint64 MWork::totalRecvSize = 0;//总接收大小
 int MWork::tempProgress = 0;//临时进度值
@@ -63,13 +63,13 @@ FileMsg MWork::parseFileMsg(QByteArray &msgByteArray)
     return FileMsg();
 }
 
-void MWork::setSaveDir(QString &sDir)
+void MWork::setSaveDir(const QString &sDir)
 {
     //获取保存目录
-    rwLock.lockForRead();//加读锁
+    workMutex.lock();//加锁
     dir = sDir;
-    rwLock.unlock();//解读锁
-    //判断存储目录是否存在，不在则创建
+    workMutex.unlock();//解锁
+    //判断存储目录是否存在，不存在则创建
     if (!QDir().exists(dir))
         QDir().mkdir(dir);
 }
@@ -88,7 +88,7 @@ bool MWork::createFile(const QString &fileName, const int &block, const qint64 &
 
 void MWork::calculateProgress(qint64 &len)
 {
-    rwLock.lockForWrite();//加写锁
+    workMutex.lock();//加锁
     totalRecvSize += len;
     tempProgress = static_cast<double>(totalRecvSize) / static_cast<double>(totalSize) * 100;
     if (tempProgress != progress) {
@@ -99,7 +99,7 @@ void MWork::calculateProgress(qint64 &len)
             progress = tempProgress = 0;
         }
     }
-    rwLock.unlock();//解写锁
+    workMutex.unlock();//解锁
 }
 
 void MWork::startConnect()
@@ -131,13 +131,15 @@ void MWork::recvFile()
     if (startRecv) {
         //获取文件信息
         msg = parseFileMsg(recvArray);
-        if (msg.isEmpty())
+        if (msg.isEmpty()) {
+            qWarning("file message is empty");
             return;
+        }
         //每个文件由第一分块记录总大小并发送更新进度条信号
         if (msg.block == 0) {
-            rwLock.lockForWrite();
+            workMutex.lock();//加锁
             totalSize += msg.fileSize;
-            rwLock.unlock();
+            workMutex.unlock();//解锁
             emit updateTotalSize(msg.fileSize);
             emit updateProgress(progress);
         }

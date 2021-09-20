@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <QStringList>
+#include <QMessageBox>
 
 #include "mwork.h"
 
@@ -22,6 +23,7 @@ public:
     ~MainWindow();
 
     static void msetStyleSheet(const QString styleSheet);
+    QString loadHelpText();
 
 public slots:
     void toConnect();//连接服务端
@@ -29,6 +31,7 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
+    QMessageBox *helpBox;//帮助信息对话框
     QStringList fileList;//文件列表
     QTimer mtimer;//定时器
     QLabel *statusLabel;//状态栏标签

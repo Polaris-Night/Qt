@@ -5,8 +5,9 @@
 #include <QMap>
 #include <QTimer>
 #include <QLabel>
-#include <QReadWriteLock>
+#include <QMutex>
 #include <QListWidgetItem>
+#include <QMessageBox>
 
 #include "mserver.h"
 #include "mwork.h"
@@ -26,6 +27,8 @@ public:
 
     static void msetStyleSheet(const QString styleSheet);
     QString speedToString(double &speed);//速度值转带单位的字符串
+    QString getActiveHostAddress();
+    QString loadHelpText();
 
 public slots:
     void readyConnect(qintptr socket);//连接客户端
@@ -33,6 +36,9 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
+    QMessageBox *helpBox;//帮助文档
+    QString ipTable;
+    QString hostAddress;//活动IP地址
     QTimer mtimer;//定时器
     MServer *server;//服务端监听socket
     QLabel *statusLabel;//状态栏标签
@@ -58,9 +64,9 @@ public:
     static qint64 totalFinishedSize;//已完成总大小
     static int totalProgress;//总进度值
     static int totalTempProgress;//临时总进度值
-    static QReadWriteLock rwLock;//读写锁
+    static QMutex mergeMutex;//合并线程互斥锁
     //<文件名, 锁>
-    static QMap<QString, QReadWriteLock*> lockMap;//读写锁列表，同一文件的分块用同一个锁
+    static QMap<QString, QMutex*> lockMap;//互斥锁列表，同一文件的分块用同一个锁
 
 protected:
     void run() override;

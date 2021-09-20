@@ -840,3 +840,21 @@ QToolTip {
     color: white;
     padding: 0px;                /*remove padding, for fix combobox tooltip.*/
 }
+
+QToolButton{
+border-style:none;
+border:1px solid #76797C;
+color:#386487;
+padding:5px;
+min-height:15px;
+border-radius:5px;
+background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #373B3F,stop:1 #C0DEF6);
+}
+
+QToolButton:hover{
+background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #E5E5E5,stop:1 #DAEFFF);
+}
+
+QToolButton:pressed{
+background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #CACACB,stop:1 #C0DEF6);
+}

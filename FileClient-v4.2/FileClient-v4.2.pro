@@ -10,6 +10,7 @@ CONFIG += c++11
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+DEFINES += QT_MESSAGELOGCONTEXT #release下输出日志信息
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -20,19 +21,25 @@ TARGET = FileClient-v4.2
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-    mlogmanager.cpp \
-    mthread.cpp \
-    mwork.cpp
+    src/mainwindow.cpp \
+    src/mlogmanager.cpp \
+    src/mthread.cpp \
+    src/mwork.cpp \
+    src/titlebar.cpp
+
+INCLUDEPATH += \
+    $$PWD/include
 
 HEADERS += \
-    mainwindow.h \
-    mlogmanager.h \
-    mthread.h \
-    mwork.h
+    include/mainwindow.h \
+    include/mlogmanager.h \
+    include/mthread.h \
+    include/mwork.h \
+    include/titlebar.h \
 
 FORMS += \
-    mainwindow.ui
+    ui/mainwindow.ui \
+    ui/titlebar.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

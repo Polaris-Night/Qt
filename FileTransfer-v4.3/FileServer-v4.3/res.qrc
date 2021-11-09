@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>transfer.png</file>
+        <file>firewall.png</file>
+    </qresource>
+</RCC>

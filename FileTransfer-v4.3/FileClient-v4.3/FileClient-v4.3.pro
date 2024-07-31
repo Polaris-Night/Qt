@@ -2,7 +2,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -19,23 +19,28 @@ DEFINES += QT_MESSAGELOGCONTEXT #release下输出日志信息
 TARGET = FileClient-v4.3
 VERSION = 2021.10.25
 RC_ICONS = transfer.ico
-RC_FILE = uac.rc
+# RC_FILE = uac.rc
+
+MOC_DIR = temp/moc
+RCC_DIR = temp/rcc
+UI_DIR = temp/ui
+OBJECTS_DIR = temp/obj
 
 include($$PWD/../tool/tool.pri)
 
 SOURCES += \
-    main.cpp \
+    src/main.cpp \
     src/mainwindow.cpp \
-    src/mconnect.cpp \
-    src/msendfilethread.cpp
+    src/sender.cpp \
+    src/worker.cpp
 
 INCLUDEPATH += \
-    $$PWD/include
+    $$PWD/src
 
 HEADERS += \
-    include/mainwindow.h \
-    include/mconnect.h \
-    include/msendfilethread.h
+    src/mainwindow.h \
+    src/sender.h \
+    src/worker.h
 
 FORMS += \
     ui/mainwindow.ui \

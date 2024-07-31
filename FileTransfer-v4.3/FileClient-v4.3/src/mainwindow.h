@@ -45,6 +45,8 @@ public slots:
     void toConnect(const QString &ip, const quint16 &port);
 
 private:
+    void initSignalHandle();
+
     /**
      * @brief The FirewallMode enum
      * @details 防火墙规则枚举类型

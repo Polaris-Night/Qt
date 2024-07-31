@@ -1,19 +1,11 @@
 #ifndef MSPEED_H
 #define MSPEED_H
 
-#include <QObject>
+#include <QString>
+#include <QStringList>
 
-#define UNIT_KB 1024
-#define UNIT_MB 1048576
-#define UNIT_GB 1073741824
-
-class MSpeed : public QObject
-{
-    Q_OBJECT
+class MSpeed {
 public:
-    explicit MSpeed(QObject *parent = nullptr);
-    ~MSpeed();
-
     /**
      * @brief addSize
      * @details 增加大小
@@ -28,12 +20,11 @@ public:
      */
     QString getSpeedSize();
 
-public slots:
     void clear();
 
 private:
-    qint64 speedSize;
-    QStringList unitList;
+    qint64 m_speedSize{};
+    QStringList unitList{"B/s", "KB/s", "MB/s", "GB/s"};
 };
 
 #endif // MSPEED_H

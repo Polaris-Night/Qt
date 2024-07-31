@@ -3,8 +3,7 @@
 
 #include <QObject>
 
-class MProgress : public QObject
-{
+class MProgress : public QObject {
     Q_OBJECT
 public:
     explicit MProgress(QObject *parent = nullptr);
@@ -18,6 +17,12 @@ public:
      * @param size 总大小
      */
     void setTotalSize(const qint64 &size);
+
+    /**
+     * @brief 增加总大小
+     * @param size
+     */
+    void addTotalSize(const qint64 &size);
 
     /**
      * @brief setCurrentSize
@@ -58,8 +63,8 @@ public slots:
     void clear();
 
 private:
-    qint64 totalSize;
-    qint64 currentSize;
+    qint64 m_totalSize{};
+    qint64 m_currentSize{};
 };
 
 #endif // MPROGRESS_H

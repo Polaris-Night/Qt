@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "program start";
 
     //关闭防火墙
-    setFirewall(FirewallMode::DISABLE);
+    // setFirewall(FirewallMode::DISABLE);
 
     //初始化变量
     initVariable();
@@ -158,7 +158,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    setFirewall(FirewallMode::ENABLE);
+    // setFirewall(FirewallMode::ENABLE);
     configSetting->setValue(DIR_KEY, saveDir);
     configSetting->setValue(THEME_KEY, theme);
     configSetting->setValue(PORT_KEY, port);

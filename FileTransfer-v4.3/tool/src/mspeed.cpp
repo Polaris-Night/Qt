@@ -1,24 +1,14 @@
 #include "mspeed.h"
 
-MSpeed::MSpeed(QObject *parent)
-    : QObject(parent)
-    , speedSize(0), unitList({"B/s", "KB/s", "MB/s", "GB/s"})
-{
-}
+#define UNIT_KB 1024
+#define UNIT_MB 1048576
+#define UNIT_GB 1073741824
 
-MSpeed::~MSpeed()
-{
-}
+void MSpeed::addSize(const qint64 &size) { m_speedSize += size; }
 
-void MSpeed::addSize(const qint64 &size)
-{
-    speedSize += size;
-}
-
-QString MSpeed::getSpeedSize()
-{
-    double speed = static_cast<double>(speedSize);//B
-    speedSize = 0;
+QString MSpeed::getSpeedSize() {
+    double speed = static_cast<double>(m_speedSize); //B
+    m_speedSize = 0;
     int index;
     if (speed < UNIT_KB) {
         //B
@@ -27,7 +17,7 @@ QString MSpeed::getSpeedSize()
         //KB
         index = 1;
         speed /= UNIT_KB;
-    } else if (speed < UNIT_GB){
+    } else if (speed < UNIT_GB) {
         //MB
         index = 2;
         speed /= UNIT_MB;
@@ -39,7 +29,4 @@ QString MSpeed::getSpeedSize()
     return QString("%1%2").arg(QString::number(speed, 'f', 2)).arg(unitList.at(index));
 }
 
-void MSpeed::clear()
-{
-    speedSize = 0;
-}
+void MSpeed::clear() { m_speedSize = 0; }

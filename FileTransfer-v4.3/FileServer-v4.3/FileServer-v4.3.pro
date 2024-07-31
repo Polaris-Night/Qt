@@ -19,7 +19,12 @@ DEFINES += QT_MESSAGELOGCONTEXT #release下输出日志信息
 TARGET = FileServer-v4.3
 VERSION = 2021.10.25
 RC_ICONS = transfer.ico
-RC_FILE = uac.rc
+# RC_FILE = uac.rc
+
+MOC_DIR = temp/moc
+RCC_DIR = temp/rcc
+UI_DIR = temp/ui
+OBJECTS_DIR = temp/obj
 
 include($$PWD/../tool/tool.pri)
 
@@ -28,16 +33,16 @@ SOURCES += \
     src/mainwindow.cpp \
     src/mmergethread.cpp \
     src/mrecvfilethread.cpp \
-    src/mserver.cpp \
+    src/mserver.cpp
 
 INCLUDEPATH += \
-    $$PWD/include
+    $$PWD/src
 
 HEADERS += \
-    include/mainwindow.h \
-    include/mmergethread.h \
-    include/mrecvfilethread.h \
-    include/mserver.h \
+    src/mainwindow.h \
+    src/mmergethread.h \
+    src/mrecvfilethread.h \
+    src/mserver.h
 
 FORMS += \
     ui/mainwindow.ui \

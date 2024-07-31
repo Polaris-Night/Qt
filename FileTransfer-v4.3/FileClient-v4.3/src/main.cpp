@@ -5,9 +5,9 @@
 
 int main(int argc, char *argv[])
 {
-    qInstallMessageHandler(MLogManager::outputMessage);
-    MLogManager::setLogFile("clientLog.log");
-    atexit(MLogManager::spaceLine);
+    // qInstallMessageHandler(MLogManager::outputMessage);
+    // MLogManager::setLogFile("clientLog.log");
+    // atexit(MLogManager::spaceLine);
 
     QApplication a(argc, argv);
     TitleBar titleBar;

@@ -3,14 +3,13 @@
 
 #include <QTcpServer>
 
-class MServer : public QTcpServer
-{
+class MServer : public QTcpServer {
     Q_OBJECT
 public:
     explicit MServer(QObject *parent = nullptr);
 
 protected:
-    virtual void incomingConnection(qintptr socketDescriptor);
+    void incomingConnection(qintptr socketDescriptor) override;
 
 signals:
     void haveNewConnect(qintptr socket);

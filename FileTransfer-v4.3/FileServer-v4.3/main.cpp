@@ -6,9 +6,9 @@
 
 int main(int argc, char *argv[])
 {
-    qInstallMessageHandler(MLogManager::outputMessage);
-    MLogManager::setLogFile("serverLog.log");
-    atexit(MLogManager::spaceLine);
+    // qInstallMessageHandler(MLogManager::outputMessage);
+    // MLogManager::setLogFile("serverLog.log");
+    // atexit(MLogManager::spaceLine);
 
     QApplication a(argc, argv);
     a.setApplicationName("fileserver-v4.3");

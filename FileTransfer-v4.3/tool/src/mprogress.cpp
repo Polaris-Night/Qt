@@ -1,55 +1,36 @@
 #include "mprogress.h"
 
 MProgress::MProgress(QObject *parent)
-    : QObject(parent), totalSize(0), currentSize(0)
-{
-}
+: QObject(parent)
+, m_totalSize(0)
+, m_currentSize(0) { }
 
 MProgress::MProgress(const qint64 &size, QObject *parent)
-    : QObject(parent), totalSize(size), currentSize(0)
-{
-}
+: QObject(parent)
+, m_totalSize(size)
+, m_currentSize(0) { }
 
 MProgress::MProgress(const MProgress &prog, QObject *parent)
-    : QObject(parent), totalSize(prog.totalSize), currentSize(prog.currentSize)
-{
+: QObject(parent)
+, m_totalSize(prog.m_totalSize)
+, m_currentSize(prog.m_currentSize) { }
+
+MProgress::~MProgress() { }
+
+void MProgress::setTotalSize(const qint64 &size) { m_totalSize = size; }
+
+void MProgress::addTotalSize(const qint64 &size) { m_totalSize += size; }
+
+void MProgress::setCurrentSize(const qint64 &size) { m_currentSize = size; }
+
+void MProgress::addSize(const qint64 &size) { m_currentSize += size; }
+
+int MProgress::getProgress() const {
+    return (static_cast<double>(m_currentSize) / static_cast<double>(m_totalSize) * 100);
 }
 
-MProgress::~MProgress()
-{
-}
+qint64 MProgress::getTotalSize() const { return m_totalSize; }
 
-void MProgress::setTotalSize(const qint64 &size)
-{
-    totalSize = size;
-}
+qint64 MProgress::getCurrentSize() const { return m_currentSize; }
 
-void MProgress::setCurrentSize(const qint64 &size)
-{
-    currentSize = size;
-}
-
-void MProgress::addSize(const qint64 &size)
-{
-    currentSize += size;
-}
-
-int MProgress::getProgress() const
-{
-    return (static_cast<double>(currentSize) / static_cast<double>(totalSize) * 100);
-}
-
-qint64 MProgress::getTotalSize() const
-{
-    return totalSize;
-}
-
-qint64 MProgress::getCurrentSize() const
-{
-    return currentSize;
-}
-
-void MProgress::clear()
-{
-    totalSize = currentSize = 0;
-}
+void MProgress::clear() { m_totalSize = m_currentSize = 0; }

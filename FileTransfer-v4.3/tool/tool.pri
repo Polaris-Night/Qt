@@ -2,20 +2,23 @@ FORMS += \
     $$PWD/ui/titlebar.ui
 
 INCLUDEPATH += \
-    $$PWD/include
+    $$PWD/src
 
 HEADERS += \
-    $$PWD/include/mclock.h \
-    $$PWD/include/mdialog.h \
-    $$PWD/include/mfilemsgmanager.h \
-    $$PWD/include/mhostaddress.h \
-    $$PWD/include/mlogmanager.h \
-    $$PWD/include/mprogress.h \
-    $$PWD/include/mspeed.h \
-    $$PWD/include/mudpbroadcast.h \
-    $$PWD/include/titlebar.h
+    $$PWD/src/filespliter.h \
+    $$PWD/src/mclock.h \
+    $$PWD/src/mdialog.h \
+    $$PWD/src/message.h \
+    $$PWD/src/mfilemsgmanager.h \
+    $$PWD/src/mhostaddress.h \
+    $$PWD/src/mlogmanager.h \
+    $$PWD/src/mprogress.h \
+    $$PWD/src/mspeed.h \
+    $$PWD/src/mudpbroadcast.h \
+    $$PWD/src/titlebar.h
 
 SOURCES += \
+    $$PWD/src/filespliter.cpp \
     $$PWD/src/mclock.cpp \
     $$PWD/src/mdialog.cpp \
     $$PWD/src/mfilemsgmanager.cpp \

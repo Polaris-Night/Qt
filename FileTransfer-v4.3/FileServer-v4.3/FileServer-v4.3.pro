@@ -29,20 +29,22 @@ OBJECTS_DIR = temp/obj
 include($$PWD/../tool/tool.pri)
 
 SOURCES += \
-    main.cpp \
+    src/main.cpp \
+    src/lockmanager.cpp \
     src/mainwindow.cpp \
-    src/mmergethread.cpp \
-    src/mrecvfilethread.cpp \
-    src/mserver.cpp
+    src/mserver.cpp \
+    src/receiver.cpp \
+    src/worker.cpp
 
 INCLUDEPATH += \
     $$PWD/src
 
 HEADERS += \
+    src/lockmanager.h \
     src/mainwindow.h \
-    src/mmergethread.h \
-    src/mrecvfilethread.h \
-    src/mserver.h
+    src/mserver.h \
+    src/receiver.h \
+    src/worker.h
 
 FORMS += \
     ui/mainwindow.ui \

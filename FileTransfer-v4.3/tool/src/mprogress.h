@@ -59,6 +59,13 @@ public:
      */
     qint64 getCurrentSize() const;
 
+    /**
+     * @brief isFinished
+     * @details 判断是否完成，即当前大小与总大小是否相等
+     * @return
+     */
+    bool isFinished() const;
+
 public slots:
     void clear();
 

@@ -9,7 +9,6 @@ HEADERS += \
     $$PWD/src/mclock.h \
     $$PWD/src/mdialog.h \
     $$PWD/src/message.h \
-    $$PWD/src/mfilemsgmanager.h \
     $$PWD/src/mhostaddress.h \
     $$PWD/src/mlogmanager.h \
     $$PWD/src/mprogress.h \
@@ -21,7 +20,6 @@ SOURCES += \
     $$PWD/src/filespliter.cpp \
     $$PWD/src/mclock.cpp \
     $$PWD/src/mdialog.cpp \
-    $$PWD/src/mfilemsgmanager.cpp \
     $$PWD/src/mhostaddress.cpp \
     $$PWD/src/mlogmanager.cpp \
     $$PWD/src/mprogress.cpp \

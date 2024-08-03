@@ -81,6 +81,6 @@ void Sender::sendFile() {
         len = m_socket->write(buffer, len);
         m_socket->waitForBytesWritten();
         blockSize -= len;
-        emit sizeSentChanged(len);
+        emit sendSizeChanged(len);
     } while (len > 0 && blockSize > 0);
 }

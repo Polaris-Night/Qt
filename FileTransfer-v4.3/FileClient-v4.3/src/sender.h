@@ -18,7 +18,7 @@ public:
     void setBlock(FileBlock &&block);
 
 signals:
-    void sizeSentChanged(qint64);
+    void sendSizeChanged(qint64);
     void finished();
 
 protected:

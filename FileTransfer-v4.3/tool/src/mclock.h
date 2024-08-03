@@ -5,8 +5,7 @@
 #include <QTime>
 #include <QTimer>
 
-class MClock : public QObject
-{
+class MClock : public QObject {
     Q_OBJECT
 public:
     explicit MClock(QObject *parent = nullptr);

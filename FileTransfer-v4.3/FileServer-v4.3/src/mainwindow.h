@@ -13,14 +13,16 @@
 #include "mclock.h"
 #include "mdialog.h"
 #include "mudpbroadcast.h"
+#include "worker.h"
 
 /************************************主线程***************************************/
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui {
+class MainWindow;
+} // namespace Ui
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
@@ -35,17 +37,29 @@ public:
     void setSaveDir(const QString &dir);
 
     /**
-     * @brief initVariable
-     * @details 初始化变量
-     */
-    void initVariable();
-
-    /**
      * @brief loadHelpText
      * @details 加载帮助文本
      * @return 帮助文本内容
      */
     QString loadHelpText();
+
+    /**
+     * @brief initVariable
+     * @details 初始化变量值
+     */
+    void initVariable();
+
+    /**
+     * @brief initConfig
+     * @details 加载配置
+     */
+    void initConfig();
+
+    /**
+     * @brief initSignalHandle
+     * @details 初始化信号处理
+     */
+    void initSignalHandle();
 
 private:
     /**
@@ -54,10 +68,7 @@ private:
      * @param ENABLE  开启
      * @param DISABLE 关闭
      */
-    enum FirewallMode {
-        ENABLE,
-        DISABLE
-    };
+    enum FirewallMode { ENABLE, DISABLE };
 
     /**
      * @brief setFirewall
@@ -68,48 +79,40 @@ private:
 
     Ui::MainWindow *ui;
 
-    MUdpBroadcast *broadcastSock;
-    QSettings *configSetting;//配置文件
-    MServer *server;//服务端监听socket
-    quint16 port;//监听端口
-    QString theme;//主题
-    MDialog *helpDialog;//帮助
-    MClock clock;//时钟
-    QTimer *mtimer;//定时器
-    QLabel *ipLabel;//本机地址标签
+    MUdpBroadcast *m_broadcastSocket{};
+    QSettings *m_config{};   //配置文件
+    MServer *m_server{};     //服务端监听socket
+    quint16 m_port;          //监听端口
+    QString theme;           //主题
+    MDialog *m_helpDialog{}; //帮助
+    MClock m_clock;          //时钟
+    QTimer *m_timer{};       //定时器
+    QLabel *m_ipLabel{};     //本机地址标签
+    Worker *m_worker{};
 
 private slots:
     /**
      * @brief readyConnect
      * @param socket
      */
-    void readyConnect(qintptr socket);//连接客户端
+    void readyConnect(qintptr socket); //连接客户端
 
     /**
      * @brief updateSpeedAndTime
      * @details 更新速度及时间
      */
     void updateSpeedAndTime();
-
-signals:
-    void goToDisconnectThis(QListWidgetItem *delItem);//断开选中项目连接信号
-    void goToDisconnect();//主动断开连接信号
-    void goToDisconnectAll();//断开所有连接信号
 };
 
-class MListWidgetItem : public QObject, public QListWidgetItem
-{
+class MListWidgetItem : public QObject, public QListWidgetItem {
     Q_OBJECT
 public:
     explicit MListWidgetItem(QListWidget *wparent = nullptr, int type = Type, QObject *oparent = nullptr)
-    : QObject(oparent), QListWidgetItem(wparent, type)
-    {}
+    : QObject(oparent)
+    , QListWidgetItem(wparent, type) { }
 
 public slots:
-    void setMText(const QString &text)
-    {
-        setText(text);
-    }
+    void setMText(const QString &text) { setText(text); }
 };
 
 #endif // MAINWINDOW_H

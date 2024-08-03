@@ -33,4 +33,6 @@ qint64 MProgress::getTotalSize() const { return m_totalSize; }
 
 qint64 MProgress::getCurrentSize() const { return m_currentSize; }
 
+bool MProgress::isFinished() const { return m_currentSize == m_totalSize; }
+
 void MProgress::clear() { m_totalSize = m_currentSize = 0; }

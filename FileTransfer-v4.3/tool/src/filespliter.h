@@ -21,6 +21,7 @@ struct FileBlock : public SerializeApi {
     QByteArray toJson() const override;
     void fromJson(const QByteArray &j) override;;
 };
+Q_DECLARE_METATYPE(FileBlock)
 
 class FileSpliter {
 public:
